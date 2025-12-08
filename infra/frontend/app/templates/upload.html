@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head><title>Subir documento</title></head>
+<body>
+  <h1>Subir CSV</h1>
+  <form method="post" action="/upload" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".csv" required />
+    <label>Param A:</label><input name="param_a" required />
+    <label>Param B:</label><input name="param_b" required />
+    <button type="submit">Subir</button>
+  </form>
+
+  <h2>Documentos subidos</h2>
+  <ul>
+    {% for f in files %}
+      <li>
+        {{ f.file_name }} — {{ f.uploaded_at }}
+        <form method="post" action="/delete" style="display:inline;">
+          <input type="hidden" name="filename" value="{{ f.file_name }}" />
+          <button type="submit">Borrar</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+</body>
+</html>
