@@ -1,95 +1,76 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  localstack:
-    image: localstack/localstack:latest
-    container_name: localstack
-    environment:
-      - SERVICES=s3,apigateway,lambda
-      - DEBUG=1
-      - LAMBDA_EXECUTOR=docker-reuse
-    ports:
-      - "4566:4566"
-      - "4571:4571"
-    volumes:
-      - "./localstack/init:/docker-entrypoint-initaws.d"
-      - "localstack_data:/var/lib/localstack"
-
-  sqlserver:
-    build:
-      context: ./infra/sqlserver
-    container_name: sqlserver
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong!Passw0rd
-    ports:
-      - "1433:1433"
-    healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
-  auth-service:
-    build:
-      context: ./services/auth-service
-    container_name: auth-service
-    environment:
-      - JWT_SECRET=supersecretkey
-      - JWT_ALG=HS256
-      - JWT_EXP_MIN=15
-    ports:
-      - "8001:8001"
-    depends_on:
-      - localstack
-
-  files-service:
-    build:
-      context: ./services/files-service
-    container_name: files-service
-    environment:
-      - AWS_ENDPOINT=http://localstack:4566
-      - AWS_REGION=us-east-1
-      - S3_BUCKET_FILES=files-bucket
-      - SQLSERVER_HOST=sqlserver
-      - SQLSERVER_USER=sa
-      - SQLSERVER_PASSWORD=YourStrong!Passw0rd
-      - SQLSERVER_DB=FileDB
-      - JWT_SECRET=supersecretkey
-      - JWT_ALG=HS256
-      - REQUIRED_ROLE=uploader
-    ports:
-      - "8002:8002"
-    depends_on:
-      - localstack
-      - sqlserver
-
-  token-service:
-    build:
-      context: ./services/token-service
-    container_name: token-service
-    environment:
-      - JWT_SECRET=supersecretkey
-      - JWT_ALG=HS256
-      - JWT_EXP_MIN=15
-    ports:
-      - "8003:8003"
-    depends_on:
-      - localstack
-
   frontend:
-    build:
-      context: ./infra/frontend
+    build: ./services/frontend
     container_name: frontend
-    environment:
-      - API_GATEWAY_URL=http://localhost:4566/restapis/fake-api-id/dev/_user_request_
     ports:
       - "8080:8080"
     depends_on:
-      - localstack
       - auth-service
       - files-service
       - token-service
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  files-service:
+    build: ./services/files-service
+    container_name: files-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - sqlserver
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_SERVER=sqlserver
+      - DB_PORT=1433
+      - DB_NAME=master
+      - DB_USER=sa
+      - DB_PASSWORD=YourStrong!Passw0rd
+
+  token-service:
+    build: ./services/token-service
+    container_name: token-service
+    ports:
+      - "8003:8003"
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  sqlserver:
+    build: ./infra/sqlserver
+    container_name: sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Passw0rd
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      - SERVICES=s3,apigateway
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./infra/localstack/init:/docker-entrypoint-initaws.d"
+      - "localstack_data:/var/lib/localstack"
 
 volumes:
   localstack_data:
