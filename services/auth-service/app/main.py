@@ -1,13 +1,29 @@
-from fastapi import FastAPI, HTTPException
-from .schemas import LoginRequest, TokenResponse
-from .security import create_token
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
-app = FastAPI(title="Auth Service")
+app = FastAPI(
+    title="Auth Service",
+    description="Servicio de autenticación",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 
-# Login anónimo: se acepta cualquier usuario/contraseña para la simulación
-@app.post("/auth/login", response_model=TokenResponse)
-def login(req: LoginRequest):
-    # Rol fijo para pruebas; podrías mapear según usuario
-    role = "uploader"
-    token, exp = create_token(user_id=req.username or "anon", role=role)
-    return TokenResponse(access_token=token, expires_in=15)
+@app.post("/auth/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Endpoint de login.
+    Retorna un token de acceso si las credenciales son correctas.
+    """
+    # Ejemplo simple: usuario fijo
+    if form_data.username == "admin" and form_data.password == "admin":
+        return {"access_token": "fake-jwt-token", "token_type": "bearer"}
+    raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+@app.get("/auth/me")
+async def read_users_me():
+    """
+    Endpoint de prueba para obtener información del usuario autenticado.
+    """
+    return {"username": "admin", "roles": ["user"]}

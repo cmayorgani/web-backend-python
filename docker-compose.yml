@@ -1,8 +1,8 @@
-version: "3.9"
-
 services:
   frontend:
-    build: ./services/frontend
+    build:
+      context: .
+      dockerfile: services/frontend/Dockerfile
     container_name: frontend
     ports:
       - "8080:8080"
@@ -12,17 +12,26 @@ services:
       - token-service
     environment:
       - PYTHONUNBUFFERED=1
+    command: uvicorn server:app --host 0.0.0.0 --port 8080 --reload
 
   auth-service:
-    build: ./services/auth-service
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
     container_name: auth-service
     ports:
       - "8001:8001"
     environment:
       - PYTHONUNBUFFERED=1
+    # Si main.py está en /app/main.py
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload --app-dir /app
+    # Si está en /app/app/main.py, cambia a:
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
   files-service:
-    build: ./services/files-service
+    build:
+      context: ./services/files-service
+      dockerfile: Dockerfile
     container_name: files-service
     ports:
       - "8002:8002"
@@ -35,14 +44,20 @@ services:
       - DB_NAME=master
       - DB_USER=sa
       - DB_PASSWORD=YourStrong!Passw0rd
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload --app-dir /app
+    # O usa app.main:app si tu main.py está dentro de /app/app/
 
   token-service:
-    build: ./services/token-service
+    build:
+      context: ./services/token-service
+      dockerfile: Dockerfile
     container_name: token-service
     ports:
       - "8003:8003"
     environment:
       - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload --app-dir /app
+    # O usa app.main:app si tu main.py está dentro de /app/app/
 
   sqlserver:
     build: ./infra/sqlserver

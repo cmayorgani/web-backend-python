@@ -1,6 +1,6 @@
 # deploy.ps1
 # Script de despliegue automático para levantar todo el ecosistema en Docker Windows
-
+Clear-Host
 Write-Host "=== Limpieza previa de contenedores e imágenes ==="
 docker-compose down -v
 

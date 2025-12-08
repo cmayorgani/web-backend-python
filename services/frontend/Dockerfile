@@ -1,17 +1,16 @@
-# Imagen base ligera de Python
 FROM python:3.12-slim
 
-# Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiar el código del frontend (cuando lo tengas)
-COPY app/ /app/
+# Copiar el código del frontend
+COPY services/frontend/app/ /app/
 
-# Instalar dependencias necesarias para un frontend en FastAPI
-RUN pip install fastapi uvicorn jinja2 python-multipart requests
+# Copiar las plantillas desde infra
+COPY infra/frontend/app/templates/ /app/templates/
 
-# Exponer el puerto donde correrá el frontend
+# Instalar dependencias necesarias
+RUN pip install fastapi uvicorn jinja2 python-multipart requests requests-toolbelt httpx
+
 EXPOSE 8080
 
-# Comando de arranque: servidor FastAPI
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8080"]
