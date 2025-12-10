@@ -1,12 +1,23 @@
 from fastapi import FastAPI, HTTPException
-from .schemas import TokenRenewRequest, TokenResponse
-from .security import renew_token
-from .config import JWT_EXP_MIN
+from schemas import TokenRenewRequest, TokenResponse
+from security import renew_token
+from config import JWT_EXP_MIN
 
-app = FastAPI(title="Token Service")
+app = FastAPI(
+    title="Token Service",
+    description="Servicio de gestión de tokens",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
 
 @app.post("/token/renew", response_model=TokenResponse)
 def renew(req: TokenRenewRequest):
+    """
+    Endpoint para renovar un token.
+    Recibe un token y devuelve uno nuevo si es válido.
+    """
     try:
         new_token = renew_token(req.token)
     except ValueError as e:

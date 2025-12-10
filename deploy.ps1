@@ -1,3 +1,5 @@
+.\destroy.ps1
+
 # deploy.ps1
 # Script de despliegue automático para levantar todo el ecosistema en Docker Windows
 Clear-Host

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt, ExpiredSignatureError, JWTError
-from .config import JWT_SECRET, JWT_ALG, JWT_EXP_MIN
+from config import JWT_SECRET, JWT_ALG, JWT_EXP_MIN
 
 def renew_token(old_token: str):
     try:
